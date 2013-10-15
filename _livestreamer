@@ -1,5 +1,65 @@
 #compdef livestreamer
 
+# wrongparse twitch's json api
+# returns stream_names and stream_descrs (non-associative) arrays
+# see http://www.twitch.tv/docs/api/team.html
+_twitch_team_live () {
+    local tmp chan
+    # tmp="$(curl -s http://api.twitch.tv/api/team/$1/live_channels.json)"
+    # yeah test data
+    tmp="$(<testdata)"
+    if [[ $tmp != '{"channels":[{"channel":{'* ]]; then
+        return 1
+    fi
+    tmp=${${tmp#'{"channels":[{"channel":{'}%'}}]}'}
+    # split channel info
+    tmp=( ${(ps.\}\},\{\"channel\":\{.)tmp} )
+    # got at least one?
+    (( $#tmp )) || return 1
+
+    # use associative arrays, for sorting
+    stream_names=( )
+    stream_descrs=( )
+    typeset -A att
+    # generate names and descriptions
+    for chan in ${${tmp#\"}%\"}; do
+        att=( )
+        # parse al of those
+        for p in ${(ps:,\":)chan}; do
+            # nvm the typeset, unbalanced \" in subscripts are weird :)
+            typeset "att[${p%%\"*}]"=${${${p#*\":}#\"}%\"}
+        done
+        if (( $+att[name] && $+att[display_name] )); then
+            stream_names+=( $att[name] )
+            stream_descrs+=( "${(l:5:: :)att[current_viewers]}  ${(r:15:: :)att[display_name]} $att[title]" )
+        fi
+    done
+}
+
+_livestreamer_twitch.tv () {
+
+    local ret=1
+    local -a teams tmp stream_names stream_descrs
+
+    _tags teamstreams
+    while _tags; do
+        if _requested subscribedstreams; then
+            ret=1
+        fi
+        if _requested teamstreams; then
+            teams=( srl )
+            for team in $teams; do
+                _twitch_team_live $team
+                _all_labels -V teamstreams expl "Team '$team'" \
+                    compadd -d stream_descrs -a stream_names && ret=0
+            done
+        fi
+        (( ret )) || break
+
+    done
+
+}
+
 _livestreamer_urls () {
 
     # ALRIGHT THIS IS IT
