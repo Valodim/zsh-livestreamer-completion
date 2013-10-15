@@ -1,5 +1,42 @@
 #compdef livestreamer
 
+_livestreamer_urls () {
+
+    # ALRIGHT THIS IS IT
+    local -a expl
+    local ret=1 service
+
+    # complete protocol
+    if ! compset -P '(#b)([-+.a-z0-9]#)://'; then
+        compstate[to_end]=''
+        _wanted prefixes expl 'url prefix' \
+            compadd -S '' "$expl[@]" 'http://' && return 0
+        return 1
+    fi
+    # we could capture the scheme here, but we don't actually care
+    # scheme="$match[1]"
+
+    typeset -a plugins
+    plugins=( justin.tv twitch.tv ustream.net )
+
+    if ! compset -P '(#b)([-+.a-zA-Z0-9]#)/'; then
+        _wanted prefixes expl 'streaming service' \
+            compadd -S '/' "$expl[@]" -a plugins && return 0
+        return 1
+    fi
+
+    # capture the service
+    service=$match[1]
+
+    if (( $+functions[_livestreamer_$service] )); then
+        _livestreamer_$service
+    else
+        _message "No completion for '$service'"
+        return 0
+    fi
+
+}
+
 _livestreamer () {
 
     _arguments \
@@ -30,7 +67,7 @@ _livestreamer () {
       --gomtv-cookie'[specify GOMTV cookie]:cookie' \
       --gomtv-username'[specify GOMTV username]:username' \
       --gomtv-password'[specify GOMTV password]:password' \
-      1:url:_utls \
+      1:url:_livestreamer_urls \
       2:stream \
       && ret=0
 
