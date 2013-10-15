@@ -17,7 +17,11 @@ _twitch_team_live () {
     # got at least one?
     (( $#tmp )) || return 1
 
-    # use associative arrays, for sorting
+    local viewmin maxstreams
+    zstyle -s ":completion:${curcontext}:twitch" viewmin viewmin || viewmin=50
+    zstyle -s ":completion:${curcontext}:twitch" maxstreams maxstreams || maxstreams=20
+
+    # associative arrays are not ordered, so we use regular ones with synced indices here.
     stream_names=( )
     stream_descrs=( )
     typeset -A att
@@ -29,9 +33,18 @@ _twitch_team_live () {
             # nvm the typeset, unbalanced \" in subscripts are weird :)
             typeset "att[${p%%\"*}]"=${${${p#*\":}#\"}%\"}
         done
-        if (( $+att[name] && $+att[display_name] )); then
+        # look at this if we have mandatory fields
+        if (( $+att[name] && $+att[display_name] && $+att[current_viewers] )); then
+
+            # break if we are below the desired min viewer count
+            (( $att[current_viewers] >= viewmin )) || break
+            # check if we are at the maximum
+            (( $#stream_names <= maxstreams )) || break
+
+            # ok, add with description
             stream_names+=( $att[name] )
             stream_descrs+=( "${(l:5:: :)att[current_viewers]}  ${(r:15:: :)att[display_name]} $att[title]" )
+
         fi
     done
 }
