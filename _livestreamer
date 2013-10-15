@@ -17,9 +17,10 @@ _twitch_team_live () {
     # got at least one?
     (( $#tmp )) || return 1
 
-    local viewmin maxstreams
+    local viewmin maxstreams format
     zstyle -s ":completion:${curcontext}:twitch-teams" viewmin viewmin || viewmin=50
     zstyle -s ":completion:${curcontext}:twitch-teams" maxstreams maxstreams || maxstreams=20
+    zstyle -s ":completion:${curcontext}:twitch-teams" format format || format="%-5c %15d %t"
 
     # associative arrays are not ordered, so we use regular ones with synced indices here.
     stream_names=( )
@@ -39,11 +40,20 @@ _twitch_team_live () {
             # break if we are below the desired min viewer count
             (( $att[current_viewers] >= viewmin )) || break
             # check if we are at the maximum
-            (( $#stream_names <= maxstreams )) || break
+            (( $#stream_names < maxstreams )) || break
 
             # ok, add with description
             stream_names+=( $att[name] )
-            stream_descrs+=( "${(l:5:: :)att[current_viewers]}  ${(r:15:: :)att[display_name]} $att[title]" )
+            zformat -f REPLY $format \
+                c:$att[current_viewers] \
+                d:$att[display_name] \
+                f:$att[followers_count] \
+                m:$att[meta_game] \
+                n:$att[name] \
+                r:$att[description] \
+                t:$att[title] \
+                v:$att[total_views]
+            stream_descrs+=( $REPLY )
 
         fi
     done
@@ -71,6 +81,8 @@ _livestreamer_twitch.tv () {
         (( ret )) || break
 
     done
+
+    return $ret
 
 }
 
