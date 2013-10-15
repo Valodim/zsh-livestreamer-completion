@@ -1,0 +1,39 @@
+#compdef livestreamer
+
+_livestreamer () {
+
+    _arguments \
+      '(*)'{-h,--help}'[Show this help message and exit]' \
+      '(*)'{-V,--version}'[show version number and exit]' \
+      '(*)'{-u,--plugins}'[print all currently installed plugins]' \
+      '(-Q --quiet -l --loglevel)'{-l,--loglevel}'[set level of log output]:level:( none error warning info debug )' \
+      '(-Q --quiet)'{-Q,--quiet}'[alias for --loglevel none]' \
+      '(-j --json)'{-j,--json}'[output JSON instead of the normal text output]' \
+      '(-p --player)'{-p,--player}'[set player command-line to start]:player command' \
+      '(-q --quiet-player)'{-q,--quiet-player}'[hide player console output]' \
+      '(-v --verbose-player)'{-v,--verbose-player}'[show all player console output]' \
+      '(-n --fifo -o --output -O --stdout)'{-n,--fifo}'[play file using a named pipe instead of stdin]:fifo file:_files -g "*(@)"' \
+      '(-n --fifo -o --output -O --stdout)'{-o,--output}'[write stream to file instead of playing it]:output file:_files' \
+      '(-f --force)'{-f,--force}'[overwrite existing files]' \
+      '(-n --fifo -o --output -O --stdout)'{-O,--stdout}'[write to stdout instead of playing]' \
+      '(-c --cmdline)'{-c,--cmdline}'[print command-line used internally to play stream]' \
+      '(-e --errorlog)'{-e,--errorlog}'[log errors to a temporary file]' \
+      '(-r --rtmpdump)'{-r,--rtmpdump}'[specify location of rtmpdump executable]:rtmpdump executable:_files -g "*(x)"' \
+      --rtmpdump-proxy'[set a proxy (SOCKS) that rtmpdump will use]:proxy host\:port' \
+      --hds-live-edge'[specify offset from edge of stream for hds]:time offset (default 10s)' \
+      --hds-fragment-buffer'[specify maximum amount of fragments to buffer]:fragments (default 10)' \
+      --ringbuffer-size'[specify maximum size for the ringbuffer]:size (default 32768)' \
+      --plugin-dirs'[set plugin directory (separate using ; )]:plugin directory:_files -/' \
+      '(--stream-types --stream-priority)'{--stream-types,--stream-priority}'[specify list of accepted stream types]:types' \
+      --stream-sorting-excludes'[fine tune best/worst synonyms]:filter' \
+      --jtv-cookie'[specify JustinTV cookie]:cookie' \
+      --gomtv-cookie'[specify GOMTV cookie]:cookie' \
+      --gomtv-username'[specify GOMTV username]:username' \
+      --gomtv-password'[specify GOMTV password]:password' \
+      1:url:_utls \
+      2:stream \
+      && ret=0
+
+}
+
+_livestreamer "$@"
