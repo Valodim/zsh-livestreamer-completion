@@ -18,8 +18,8 @@ _twitch_team_live () {
     (( $#tmp )) || return 1
 
     local viewmin maxstreams
-    zstyle -s ":completion:${curcontext}:twitch" viewmin viewmin || viewmin=50
-    zstyle -s ":completion:${curcontext}:twitch" maxstreams maxstreams || maxstreams=20
+    zstyle -s ":completion:${curcontext}:twitch-teams" viewmin viewmin || viewmin=50
+    zstyle -s ":completion:${curcontext}:twitch-teams" maxstreams maxstreams || maxstreams=20
 
     # associative arrays are not ordered, so we use regular ones with synced indices here.
     stream_names=( )
@@ -33,7 +33,7 @@ _twitch_team_live () {
             # nvm the typeset, unbalanced \" in subscripts are weird :)
             typeset "att[${p%%\"*}]"=${${${p#*\":}#\"}%\"}
         done
-        # look at this if we have mandatory fields
+        # look at this if we have all mandatory fields
         if (( $+att[name] && $+att[display_name] && $+att[current_viewers] )); then
 
             # break if we are below the desired min viewer count
@@ -60,11 +60,12 @@ _livestreamer_twitch.tv () {
             ret=1
         fi
         if _requested teamstreams; then
-            teams=( srl )
+            # look up which teams to complete (srl for default because it's my usecase. you just configure it. :P)
+            zstyle -a ":completion:${curcontext}:twitch-teams" teams teams || teams=( srl )
             for team in $teams; do
                 _twitch_team_live $team
                 _all_labels -V teamstreams expl "Team '$team'" \
-                    compadd -d stream_descrs -a stream_names && ret=0
+                    compadd -l -d stream_descrs -a stream_names && ret=0
             done
         fi
         (( ret )) || break
@@ -112,7 +113,9 @@ _livestreamer_urls () {
 
 _livestreamer () {
 
-    _arguments \
+    local curcontext="${curcontext}"
+
+    _arguments -C \
       '(*)'{-h,--help}'[Show this help message and exit]' \
       '(*)'{-V,--version}'[show version number and exit]' \
       '(*)'{-u,--plugins}'[print all currently installed plugins]' \
