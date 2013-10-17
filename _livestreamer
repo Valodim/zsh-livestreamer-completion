@@ -59,7 +59,9 @@ _twitch_team_live () {
     done
 }
 
-_livestreamer_twitch.tv () {
+_twitch_team_streams () {
+
+    (( $+commands[curl] && $+commands[python] )) || return 1
 
     local ret=1
     local -a teams tmp stream_names stream_descrs
@@ -83,6 +85,68 @@ _livestreamer_twitch.tv () {
     done
 
     return $ret
+
+}
+
+_twitch_subscribed () {
+
+    (( $+commands[curl] && $+commands[python] )) || return 1
+
+    local token
+    # need this for subscribed channel completion
+    zstyle -a ":completion:${curcontext}:twitch:subs" oauth-token token || return 1
+
+    local viewmin maxstreams format
+    zstyle -s ":completion:${curcontext}:twitch:subs" viewmin viewmin || viewmin=0
+    zstyle -s ":completion:${curcontext}:twitch:subs" maxstreams maxstreams || maxstreams=20
+    zstyle -s ":completion:${curcontext}:twitch:subs" format format || format="%-5c %15d %t"
+
+    local -a stream_names stream_descrs
+
+    # strip any non-printable characters
+    att=( "${(@)att//[^[:print:]]/}" )
+
+    curl -s -H 'Accept: application/vnd.twitchtv.v2+json' -H "Authorization: OAuth $token" -X GET https://api.twitch.tv/kraken/streams/followed \
+        | PYTHONIOENCODING=UTF-8 python -c '
+import sys, json
+data = json.loads(sys.stdin.read().decode("utf-8"))
+for s in data["streams"]:
+    print "\0".join([
+        s["channel"]["name"],
+        s["channel"]["display_name"],
+        str(s["viewers"]),
+        s["channel"]["game"],
+        s["channel"]["status"]
+    ])
+' 2>/dev/null \
+        | while IFS=$'\0' read -r -A att; do
+
+            # break if we are below the desired min viewer count
+            (( $att[3] >= viewmin )) || break
+            # check if we are at the maximum
+            (( $#stream_names < maxstreams )) || break
+
+            # ok, add with description
+            stream_names+=( $att[1] )
+            zformat -f REPLY $format \
+                c:$att[3] \
+                d:$att[2] \
+                m:$att[4] \
+                n:$att[1] \
+                t:$att[5]
+            stream_descrs+=( $REPLY )
+    done
+
+    _wanted -V subs expl "Subscribed Streams" \
+        compadd -l -d stream_descrs -a stream_names
+
+}
+
+_livestreamer_twitch.tv () {
+
+    _alternative \
+        'subscribedstreams:Subscribed Streams:_twitch_subscribed' \
+        'teamstreams:Team Streams:_twitch_team_streams'
 
 }
 
