@@ -88,15 +88,12 @@ _twitch_subscribed () {
     zstyle -s ":completion:${curcontext}:twitch:subs" maxstreams maxstreams || maxstreams=20
     zstyle -s ":completion:${curcontext}:twitch:subs" format format || format="%-5c %15d %t"
 
-    local -a stream_names stream_descrs
-
-    # strip any non-printable characters
-    att=( "${(@)att//[^[:print:]]/}" )
+    local -a stream_names stream_descrs att
 
     curl -s -H 'Accept: application/vnd.twitchtv.v2+json' -H "Authorization: OAuth $token" -X GET https://api.twitch.tv/kraken/streams/followed \
         | PYTHONIOENCODING=UTF-8 python -c '
 import sys, json
-data = json.loads(sys.stdin.read().decode("utf-8"))
+data = json.loads(sys.stdin.read())
 for s in data["streams"]:
     print "\0".join([
         s["channel"]["name"],
@@ -107,6 +104,12 @@ for s in data["streams"]:
     ])
 ' 2>/dev/null \
         | while IFS=$'\0' read -r -A att; do
+
+            # strip any non-printable characters
+            att=( "${(@)att//[^[:print:]]/}" )
+
+            # skip if it's not the right number of attributes for some reason
+            (( $#att == 5 )) || continue
 
             # break if we are below the desired min viewer count
             (( $att[3] >= viewmin )) || break
@@ -124,7 +127,8 @@ for s in data["streams"]:
             stream_descrs+=( $REPLY )
     done
 
-    _wanted -V subs expl "Subscribed Streams" \
+    _message -e subscribed "No live subscribed streams"
+    _wanted -V subscribed expl "Subscribed Streams" \
         compadd -l -d stream_descrs -a stream_names
 
 }
@@ -132,8 +136,8 @@ for s in data["streams"]:
 _livestreamer_twitch.tv () {
 
     _alternative \
-        'subscribedstreams:Subscribed Streams:_twitch_subscribed' \
-        'teamstreams:Team Streams:_twitch_team_streams'
+        'subscribed:Subscribed Streams:_twitch_subscribed' \
+        'teams:Team Streams:_twitch_team_streams'
 
 }
 
