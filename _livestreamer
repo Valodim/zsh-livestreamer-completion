@@ -1,12 +1,11 @@
 #compdef livestreamer
 
-# wrongparse twitch's json api
 # returns stream_names and stream_descrs (non-associative) arrays
 # see http://www.twitch.tv/docs/api/team.html
 _twitch_team_live () {
 
     local viewmin maxstreams format
-    zstyle -s ":completion:${curcontext}:twitch:teams:$1" viewmin viewmin || viewmin=50
+    zstyle -s ":completion:${curcontext}:twitch:teams:$1" viewmin viewmin || viewmin=0
     zstyle -s ":completion:${curcontext}:twitch:teams:$1" maxstreams maxstreams || maxstreams=20
     zstyle -s ":completion:${curcontext}:twitch:teams:$1" format format || format="%-5c %15d %t"
 
@@ -47,7 +46,7 @@ for s in data["channels"]:
             zformat -f REPLY $format \
                 c:$att[3] \
                 d:$att[2] \
-                m:$att[4] \
+                g:$att[4] \
                 n:$att[1] \
                 t:$att[5]
             stream_descrs+=( $REPLY )
