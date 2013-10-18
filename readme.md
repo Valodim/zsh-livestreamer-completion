@@ -6,6 +6,7 @@ This is a zsh completion for
 completes channels from twitch.tv. I have no plans to change that, since twitch
 is all I really use livestreamer for - but feel free to a send pull request.
 
+![screenshot](http://valodim.stratum0.net/livestreamer_completion.png "Pinkie Pie Style!")
 
 installation and configuration
 ---
