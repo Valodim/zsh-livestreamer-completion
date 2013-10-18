@@ -1,0 +1,16 @@
+<html>
+
+<script type="text/javascript">
+
+    document.write("href: " + document.location.href + "<br><br>");
+
+    if(match = /access_token=([^&]+)/.exec(document.location.hash)) {
+        document.write("Alright! Copy this somewhere into your .zshrc:<br><br>")
+        document.write("<strong>zstyle ':completion:*:twitch:*' oauth-token " + match[1] + "</strong>");
+    } else {
+        document.write("access_token missing in hash :(");
+    }
+
+</script>
+
+</html>
