@@ -65,8 +65,8 @@ _twitch_team_streams () {
     local ret=1
     local -a teams stream_names stream_descrs
 
-    # look up which teams to complete (srl for default because it's my usecase. you just configure it. :P)
-    zstyle -a ":completion:${curcontext}:twitch" teams teams || teams=( srl )
+    # look up which teams to complete
+    zstyle -a ":completion:${curcontext}:twitch" teams teams
     for team in $teams; do
         _twitch_team_live $team && ret=0
     done
@@ -75,18 +75,18 @@ _twitch_team_streams () {
 
 }
 
-_twitch_subscribed () {
+_twitch_followed () {
 
     (( $+commands[curl] && $+commands[python] )) || return 1
 
     local token
-    # need this for subscribed channel completion
-    zstyle -a ":completion:${curcontext}:twitch:subs" oauth-token token || return 1
+    # need this for followed channel completion
+    zstyle -a ":completion:${curcontext}:twitch:follows" oauth-token token || return 1
 
     local viewmin maxstreams format
-    zstyle -s ":completion:${curcontext}:twitch:subs" viewmin viewmin || viewmin=0
-    zstyle -s ":completion:${curcontext}:twitch:subs" maxstreams maxstreams || maxstreams=20
-    zstyle -s ":completion:${curcontext}:twitch:subs" format format || format="%-5c %15d %t"
+    zstyle -s ":completion:${curcontext}:twitch:follows" viewmin viewmin || viewmin=0
+    zstyle -s ":completion:${curcontext}:twitch:follows" maxstreams maxstreams || maxstreams=20
+    zstyle -s ":completion:${curcontext}:twitch:follows" format format || format="%-5c %15d %t"
 
     local -a stream_names stream_descrs att
 
@@ -127,8 +127,11 @@ for s in data["streams"]:
             stream_descrs+=( $REPLY )
     done
 
-    _message -e subscribed "No live subscribed streams"
-    _wanted -V subscribed expl "Subscribed Streams" \
+    # giving a _message will - for some reason - disable menu completion for
+    # all other results. so annoying. so, we just silently fail.
+    # _message -e followed "No live followed streams"
+
+    _wanted -V followed expl "Followed Streams" \
         compadd -l -d stream_descrs -a stream_names
 
 }
@@ -136,7 +139,7 @@ for s in data["streams"]:
 _livestreamer_twitch.tv () {
 
     _alternative \
-        'subscribed:Subscribed Streams:_twitch_subscribed' \
+        'followed:Followed Streams:_twitch_followed' \
         'teams:Team Streams:_twitch_team_streams'
 
 }
