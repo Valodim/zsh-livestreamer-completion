@@ -14,7 +14,7 @@ _twitch_team_live () {
     stream_descrs=( )
     typeset -a att
 
-    # wow, this PYTHONIOENCODING shit took me way too long to figure out oO
+    # wow, this PYTHONIOENCODING shit took me way too long to figure out!
     curl -s -X GET "http://api.twitch.tv/api/team/$1/live_channels.json" \
         | PYTHONIOENCODING=UTF-8 python -c '
 import sys, json
@@ -52,14 +52,9 @@ for s in data["channels"]:
             stream_descrs+=( $REPLY )
     done
 
-    _wanted -V team_$1 expl "Team '$1'" \
-        compadd -l -d stream_descrs -a stream_names
-
 }
 
 _twitch_team_streams () {
-
-    (( $+commands[curl] && $+commands[python] )) || return 1
 
     local ret=1
     local -a teams stream_names stream_descrs
@@ -68,6 +63,8 @@ _twitch_team_streams () {
     zstyle -a ":completion:${curcontext}:twitch" teams teams
     for team in $teams; do
         _twitch_team_live $team && ret=0
+        _wanted -V team_$team expl "Team '$1'" \
+            compadd -l -d stream_descrs -a stream_names
     done
 
     return $ret
@@ -76,7 +73,6 @@ _twitch_team_streams () {
 
 _twitch_followed () {
 
-    (( $+commands[curl] && $+commands[python] )) || return 1
 
     local token
     # need this for followed channel completion
@@ -124,6 +120,7 @@ for s in data["streams"]:
                 n:$att[1] \
                 t:$att[5]
             stream_descrs+=( $REPLY )
+
     done
 
     # giving a _message will - for some reason - disable menu completion for
@@ -137,6 +134,9 @@ for s in data["streams"]:
 
 _livestreamer_twitch.tv () {
 
+    # both of these require curl and python, so bail if either is not available
+    (( $+commands[curl] && $+commands[python] )) || return 1
+
     _alternative \
         'followed:Followed Streams:_twitch_followed' \
         'teams:Team Streams:_twitch_team_streams'
@@ -145,7 +145,6 @@ _livestreamer_twitch.tv () {
 
 _livestreamer_urls () {
 
-    # ALRIGHT THIS IS IT
     local -a expl
     local ret=1 service
 
@@ -159,6 +158,7 @@ _livestreamer_urls () {
     # we could capture the scheme here, but we don't actually care
     # scheme="$match[1]"
 
+    # could add more here.. but I don't have completions for these anyways so *shrug
     typeset -a plugins
     plugins=( twitch.tv )
 
