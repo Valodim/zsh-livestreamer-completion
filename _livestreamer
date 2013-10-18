@@ -154,7 +154,7 @@ _livestreamer_urls () {
     # scheme="$match[1]"
 
     typeset -a plugins
-    plugins=( twitch.tv justin.tv ustream.net )
+    plugins=( twitch.tv )
 
     if ! compset -P '(#b)([-+.a-zA-Z0-9]#)/'; then
         _wanted prefixes expl 'streaming service' \
