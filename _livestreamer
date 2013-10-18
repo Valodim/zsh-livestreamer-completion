@@ -15,7 +15,7 @@ _twitch_team_live () {
     typeset -a att
 
     # wow, this PYTHONIOENCODING shit took me way too long to figure out!
-    curl -s -X GET "http://api.twitch.tv/api/team/$1/live_channels.json" \
+    curl -s -m 3 -X GET "http://api.twitch.tv/api/team/$1/live_channels.json" \
         | PYTHONIOENCODING=UTF-8 python -c '
 import sys, json
 data = json.loads(sys.stdin.read())
@@ -85,7 +85,7 @@ _twitch_followed () {
 
     local -a stream_names stream_descrs att
 
-    curl -s -H 'Accept: application/vnd.twitchtv.v2+json' -H "Authorization: OAuth $token" -X GET https://api.twitch.tv/kraken/streams/followed \
+    curl -s -m 3 -H 'Accept: application/vnd.twitchtv.v2+json' -H "Authorization: OAuth $token" -X GET https://api.twitch.tv/kraken/streams/followed \
         | PYTHONIOENCODING=UTF-8 python -c '
 import sys, json
 data = json.loads(sys.stdin.read())

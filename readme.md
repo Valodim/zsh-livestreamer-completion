@@ -3,8 +3,9 @@ zsh livestreamer / twitch.tv completion
 
 This is a zsh completion for
 [livestreamer](https://github.com/chrippa/livestreamer). At this point, it only
-completes channels from twitch.tv. I have no plans to change that, since twitch
-is all I really use livestreamer for - but feel free to a send pull request.
+completes options and channels from twitch.tv. I have no plans to change that,
+since twitch is all I really use livestreamer for - but feel free to a send
+pull request.
 
 ![screenshot](http://valodim.stratum0.net/livestreamer_completion.png "Pinkie Pie Style!")
 
@@ -80,4 +81,5 @@ calls to python for json parsing.
 [I tried](https://gist.github.com/Valodim/7017924) doing the parsing in zsh,
 but it's just not feasible in an efficent manner. But since livestreamer itself
 is python, I figured it'd be okay to outsource this with some lines of python.
+Then again, it uses curl for fetching the data so~
 
