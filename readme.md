@@ -1,11 +1,9 @@
-zsh livestreamer / twitch.tv completion
+zsh livestreamer / twitch.tv / justin.tv completion
 ===
 
 This is a zsh completion for
 [livestreamer](https://github.com/chrippa/livestreamer). At this point, it only
-completes options and channels from twitch.tv. I have no plans to change that,
-since twitch is all I really use livestreamer for - but feel free to a send
-pull request.
+completes options as usual, and channels from twitch.tv as well as justin.tv.
 
 ![screenshot](http://valodim.stratum0.net/livestreamer_completion.png "Pinkie Pie Style!")
 
@@ -22,7 +20,7 @@ Without configuration, options and stuff will be completed, but no channels.
 There are two types of completions supported for channels, followed and teams.
 
 
-followed channel config
+twitch.tv followed channel config
 ---
 
 To get completion of channels followed by an account, a twitch
@@ -36,7 +34,7 @@ In the end, you should end up with a zstyle like this:
 That's it! Completion should otherwise just work™
 
 
-team channel config
+twitch.tv team channel config
 ---
 
 This is the easier one, it completes twitch teams. All you need to do is set a
@@ -46,6 +44,14 @@ style to all teams you want completed:
 
 This completes the [SpeedRunsLive](http://twitch.tv/team/srl) team. More than
 one is possible by just adding more names to the line.
+
+justin.tv favorite channel config
+---
+
+Unlike the twitch.tv followed channels, favorites for justin.tv do NOT need
+authentication. Yay! Simply set your username like this:
+
+    zstyle ":completion:*:justin:favorites" username MyTwitchUsername
 
 
 fine tuning

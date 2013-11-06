@@ -1,5 +1,65 @@
 #compdef livestreamer
 
+_justin_favorite () {
+
+    local username
+    # need this for followed channel completion
+    zstyle -a ":completion:${curcontext}:justin:favorites" username username || return 1
+
+    local viewmin maxstreams format
+    zstyle -s ":completion:${curcontext}:justin:favorites" viewmin viewmin || viewmin=0
+    zstyle -s ":completion:${curcontext}:justin:favorites" maxstreams maxstreams || maxstreams=20
+    zstyle -s ":completion:${curcontext}:justin:favorites" format format || format="%-5c %15d %t"
+
+    local -a stream_names stream_descrs att
+
+    curl -s -m 3 -H 'Accept: application/json' -X GET http://api.justin.tv/api/user/favorites/$username.json\?live=true \
+        | PYTHONIOENCODING=UTF-8 python -c '
+import sys, json
+data = json.loads(sys.stdin.read())
+for s in data:
+    print "\0".join([
+        s["login"],
+        s["title"],
+        str(s["viewer_count"]),
+        s["status"]
+    ])
+' 2>/dev/null \
+        | while IFS=$'\0' read -r -A att; do
+
+            # strip any non-printable characters
+            att=( "${(@)att//[^[:print:]]/}" )
+
+            # skip if it's not the right number of attributes for some reason
+            (( $#att == 4 )) || continue
+
+            # break if we are below the desired min viewer count
+            (( $att[3] >= viewmin )) || break
+            # check if we are at the maximum
+            (( $#stream_names < maxstreams )) || break
+
+            # ok, add with description
+            stream_names+=( $att[1] )
+            zformat -f REPLY $format \
+                c:$att[3] \
+                d:$att[2] \
+                n:$att[1] \
+                t:$att[4]
+            stream_descrs+=( $REPLY )
+
+    done
+
+    # giving a _message will - for some reason - disable menu completion for
+    # all other results. so annoying. so, we just silently fail.
+    # _message -e followed "No live followed streams"
+
+    _wanted -V jtv_favorites expl "Favorite Streams" \
+        compadd -l -d stream_descrs -a stream_names
+
+}
+
+
+
 # returns stream_names and stream_descrs (non-associative) arrays
 # see http://www.twitch.tv/docs/api/team.html
 _twitch_team_live () {
@@ -63,7 +123,7 @@ _twitch_team_streams () {
     zstyle -a ":completion:${curcontext}:twitch" teams teams
     for team in $teams; do
         _twitch_team_live $team && ret=0
-        _wanted -V team_$team expl "Team '$1'" \
+        _wanted -V twitch_team_$team expl "Team '$team'" \
             compadd -l -d stream_descrs -a stream_names
     done
 
@@ -127,15 +187,19 @@ for s in data["streams"]:
     # all other results. so annoying. so, we just silently fail.
     # _message -e followed "No live followed streams"
 
-    _wanted -V followed expl "Followed Streams" \
+    _wanted -V twitch_followed expl "Followed Streams" \
         compadd -l -d stream_descrs -a stream_names
 
 }
 
-_livestreamer_twitch.tv () {
+_livestreamer_justin.tv () {
 
-    # both of these require curl and python, so bail if either is not available
-    (( $+commands[curl] && $+commands[python] )) || return 1
+    # only favorites so far~
+    _justin_favorite
+
+}
+
+_livestreamer_twitch.tv () {
 
     _alternative \
         'followed:Followed Streams:_twitch_followed' \
@@ -160,7 +224,7 @@ _livestreamer_urls () {
 
     # could add more here.. but I don't have completions for these anyways so *shrug
     typeset -a plugins
-    plugins=( twitch.tv )
+    plugins=( twitch.tv justin.tv )
 
     if ! compset -P '(#b)([-+.a-zA-Z0-9]#)/'; then
         _wanted prefixes expl 'streaming service' \
@@ -170,6 +234,15 @@ _livestreamer_urls () {
 
     # capture the service
     service=$match[1]
+
+    # all further completions require curl and python
+    if ! (( $+commands[curl] && $+commands[python] )); then
+        _message "Error: curl and python required for api completion."
+        return 1
+    fi
+
+    # force listing, instead of inserting single results (doesn't work, not sure why :S)
+    compstate[list]=force
 
     if (( $+functions[_livestreamer_$service] )); then
         _livestreamer_$service
